@@ -1,0 +1,38 @@
+# Local development / test requirements.
+#
+# NOTE on asyncpg: it is intentionally NOT listed here. The app only needs
+# it when DATABASE_URL uses the postgresql+asyncpg:// scheme (real
+# production Postgres) — see escrow_models.py, DATABASE_URL defaults to
+# sqlite+aiosqlite for local dev, which this file supports fully without
+# it. asyncpg ships no prebuilt wheel for some newer Python releases and
+# requires a C compiler to build from source. If/when you deploy against a
+# real Postgres database, either:
+#   (a) install a C++ build toolchain and add `asyncpg` back here, or
+#   (b) simpler: use `postgresql+psycopg://` instead of
+#       `postgresql+asyncpg://` in DATABASE_URL — psycopg[binary] (already
+#       below) supports async and ships prebuilt wheels more consistently
+#       across Python versions, so nothing extra needs installing.
+#
+# NOTE on pydantic: left unpinned (any 2.x) rather than pinned to an old
+# exact version, because an old pydantic pulls in an equally old
+# pydantic-core, and pydantic-core is a compiled (Rust) package — an old
+# release may not have a prebuilt wheel for a newer Python interpreter,
+# forcing a from-source build that needs a Rust toolchain. Letting pip pick
+# the latest 2.x avoids that. Once this env is verified working, consider
+# pinning to whatever version pip actually resolved, so `pip freeze` output
+# becomes your new lockfile.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+aiosqlite>=0.20
+httpx>=0.27
+pydantic>=2
+cryptography>=43.0
+qrcode[pil]>=7.4
+python-dotenv>=1.0
+alembic>=1.13
+psycopg[binary]>=3.2
+
+pytest>=8.0
+pytest-asyncio>=0.23
+greenlet==3.5.6

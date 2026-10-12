@@ -1,0 +1,43 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Mount the Safaricom public certificate read-only for B2C payouts.
+      # Put the real .cer file at ./certs/SafaricomCertificate.cer first.
+      - ./certs:/run/secrets/mpesa:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else sys.exit(1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: escrow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    # Not published to the host by default: the api service reaches Postgres
+    # over the internal Compose network (service name "postgres"), and a
+    # database holding financial data shouldn't be reachable from outside
+    # the host at all, let alone from 0.0.0.0. Uncomment only for local
+    # debugging with a DB client, and bind to loopback rather than every
+    # interface:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d escrow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:

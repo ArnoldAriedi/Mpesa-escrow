@@ -1,0 +1,8 @@
+on_http_request:
+  - expressions:
+      - req.url.path.startsWith('/callbacks/')
+    actions:
+      - type: add-headers
+        config:
+          headers:
+            X-Mpesa-Secret: "<value of MPESA_CALLBACK_SECRET; copy to ngrok-policy.yml, which is git-ignored>"
